@@ -1,34 +1,23 @@
 import os
 import json
-import sys
+import streamlit as st
+from openai import OpenAI
+from pydantic import BaseModel
+from dotenv import load_dotenv
 from typing import Optional, Dict
 
-# 1. Install/Import Check
-try:
-    import streamlit as st
-    from openai import OpenAI
-    from pydantic import BaseModel
-    from dotenv import load_dotenv
-except ImportError:
-    # Fallback if libraries are missing
-    import subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "streamlit", "openai", "pydantic", "python-dotenv"])
-    import streamlit as st
-    from openai import OpenAI
-    from pydantic import BaseModel
-    from dotenv import load_dotenv
-
-# 2. Setup & Configuration
+# 1. Setup & Configuration
 load_dotenv()
 
 # Force page config to be the very first Streamlit command
 st.set_page_config(page_title="AI Product Describer", layout="wide")
 
 # Connect to Groq (using OpenAI client structure)
-api_key = os.environ.get("GROQ_API_KEY")
+# Note: Streamlit Cloud uses st.secrets, local uses .env
+api_key = os.environ.get("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY")
 
 if not api_key:
-    st.error("🚨 GROQ_API_KEY is missing! Please create a .env file with your key.")
+    st.error(" GROQ_API_KEY is missing! Please set it in .env (local) or Streamlit Secrets (cloud).")
     st.stop()
 
 client = OpenAI(
@@ -106,7 +95,7 @@ def evaluate_quality(input_data: dict, generated_text: str):
         return {"score": 0, "consistency_check": "Error", "tone_feedback": str(e)}
 
 # --- UI LAYER (Streamlit) ---
-st.title("🛍️ AI Product Description Generator")
+st.title(" AI Product Description Generator")
 
 with st.sidebar:
     st.header("Product Details")
@@ -151,8 +140,8 @@ if generate_btn:
             st.metric("Consistency Score", f"{eval_result.get('score')}/10")
             
             if eval_result.get('consistency_check') == "Pass":
-                st.success("✅ Specs Match")
+                st.success(" Specs Match")
             else:
-                st.error("❌ Missing Info")
+                st.error(" Missing Info")
                 
             st.info(f"**Tone:** {eval_result.get('tone_feedback')}")
